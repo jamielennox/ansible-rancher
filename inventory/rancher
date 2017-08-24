@@ -1,0 +1,5 @@
+[rancher-server]
+cluster-1.sl.jamielennox.net ansible_user=centos
+
+[rancher-agent]
+cluster-[2:4].sl.jamielennox.net ansible_user=centos

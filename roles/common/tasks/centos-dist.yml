@@ -1,0 +1,12 @@
+---
+- name: Update all packages
+  become: yes
+  yum:
+    name: "*"
+    state: latest
+
+- name: Install epel
+  become: yes
+  yum:
+    name: epel-release
+    state: present

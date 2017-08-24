@@ -1,0 +1,5 @@
+*.retry
+*.py[co]
+
+galaxy_roles/
+venv/

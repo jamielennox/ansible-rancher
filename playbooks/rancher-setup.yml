@@ -1,0 +1,108 @@
+---
+- name: Install everything
+  hosts: all
+  become: yes
+  tags:
+    - common
+  roles:
+    - role: common
+    - role: geerlingguy.docker
+      docker_edition: ce
+      docker_install_compose: no
+
+- name: Install rancher server
+  hosts: rancher-server
+  become: yes
+  tags:
+    - rancher
+    - server
+
+  pre_tasks:
+    - name: set selinux
+      selinux:
+        policy: targeted
+        state: enforcing
+
+    - name: Allow httpd to connect to port
+      seboolean:
+        name: httpd_can_network_connect
+        persistent: yes
+        state: yes
+
+  roles:
+    - role: geerlingguy.nginx
+      tags:
+        - nginx
+      nginx_remove_default_vhost: true
+      nginx_vhost_template: templates/simple-vhost.j2
+      nginx_vhosts:
+        - filename: letsencrypt.conf
+          server_name: "{{ server_fqdn }}"
+          listen: 80
+          server_content: |
+            location /.well-known/acme-challenge {
+              allow all;
+              root /var/www/html;
+            }
+
+            location / {
+              return 301 https://$host$request_uri;
+            }
+      when:
+        - rancher_use_nginx | default(True) | bool
+        - rancher_use_letsencrypt | default(True) | bool
+
+    - role: thefinn93.letsencrypt
+      letsencrypt_webroot_path: /var/www/html
+      letsencrypt_cert_domains: ["{{ server_fqdn }}"]
+      letsencrypt_renewal_command_args: '--renew-hook "systemctl restart nginx"'
+      when:
+        - rancher_use_nginx | default(True) | bool
+        - rancher_use_letsencrypt | default(True) | bool
+
+    - role: rancher-server
+      tags:
+        - rancher-server
+      rancher_server_interface: "{{ rancher_use_nginx | default(True) | bool | ternary('127.0.0.1', '0.0.0.0') }}"
+      rancher_server_port: 8080
+
+    - role: geerlingguy.nginx
+      tags:
+        - nginx
+      nginx_remove_default_vhost: true
+      nginx_vhost_template: templates/simple-vhost.j2
+      nginx_vhosts:
+        - filename: rancher.conf
+          server_name: "{{ server_fqdn }}"
+          listen: "{{ rancher_use_letsencrypt | default(True) | bool | ternary('443 ssl', '80') }}"
+          state: "{{ rancher_use_nginx | default(True) | bool | ternary('present', 'absent') }}"
+          http_content: |
+            map $http_upgrade $connection_upgrade {
+                default Upgrade;
+                ''      close;
+            }
+          server_content: |
+            {% if rancher_use_letsencrypt | default(True) | bool %}
+            ssl_certificate "/etc/letsencrypt/live/{{ server_fqdn }}/fullchain.pem";
+            ssl_certificate_key  "/etc/letsencrypt/live/{{ server_fqdn }}/privkey.pem";
+
+            ssl_stapling on;
+            ssl_stapling_verify on;
+            {% endif %}
+
+            location / {
+              proxy_set_header Host $host;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              proxy_set_header X-Forwarded-Port $server_port;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+              proxy_pass http://127.0.0.1:8080;
+
+              proxy_http_version 1.1;
+              proxy_set_header Upgrade $http_upgrade;
+              proxy_set_header Connection $connection_upgrade;
+              proxy_read_timeout 900s;
+            }
+
+      when:
+        - rancher_use_nginx | default(True) | bool

@@ -1,0 +1,24 @@
+---
+- name: Rancher data directory
+  file:
+    path: "{{ rancher_agent_data_dir }}"
+    state: directory
+
+- name: Rancher agent container
+  tags:
+    - test
+  docker_container:
+    name: "{{ rancher_agent_name }}"
+    image: "{{ rancher_agent_image }}"
+    privileged: True
+    state: started
+    restart_policy: "{{ rancher_agent_restart_policy }}"
+    command: "{{ rancher_agent_url }}"
+    log_driver: journald
+    cleanup: "{{ rancher_agent_cleanup | bool }}"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:rw"
+      - "{{ rancher_agent_data_dir }}:/var/lib/rancher:z"
+    env:
+      CATTLE_AGENT_IP: "{{ rancher_agent_ip }}"
+      CATTLE_HOST_LABELS: "{{ rancher_agent_labels | rancher_labels_encode }}"

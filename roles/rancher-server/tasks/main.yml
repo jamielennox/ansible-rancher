@@ -1,0 +1,9 @@
+- name: Install rancher server
+  docker_container:
+    name: "{{ rancher_server_name }}"
+    image: "{{ rancher_server_image }}"
+    state: started
+    restart_policy: "{{ rancher_server_restart_policy }}"
+    cleanup: "{{ rancher_server_cleanup | bool }}"
+    ports:
+      - "{{ rancher_server_interface }}:{{ rancher_server_port }}:8080"

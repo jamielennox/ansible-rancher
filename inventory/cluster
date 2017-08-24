@@ -1,0 +1,2 @@
+[cluster]
+cluster-[1:4].sl.jamielennox.net ansible_user=centos

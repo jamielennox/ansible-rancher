@@ -1,0 +1,7 @@
+---
+rancher_server_cleanup: True
+rancher_server_name: ansible-rancher-server
+rancher_server_port: 8080
+rancher_server_restart_policy: always
+rancher_server_image: rancher/server
+rancher_server_interface: 127.0.0.1

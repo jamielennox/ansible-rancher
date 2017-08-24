@@ -1,0 +1,3 @@
+---
+semodule_dest_dir: /opt/ansible-semodule
+semodule_items: []

@@ -1,0 +1,4 @@
+- src: dev-sec.os-hardening
+- src: geerlingguy.docker
+- src: geerlingguy.nginx
+- src: thefinn93.letsencrypt

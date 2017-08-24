@@ -1,0 +1,9 @@
+---
+rancher_agent_cleanup: True
+rancher_agent_name: ansible-rancher-agent
+rancher_agent_image: rancher/agent
+rancher_agent_restart_policy: "on-failure"
+rancher_agent_data_dir: /var/lib/rancher
+
+rancher_agent_ip: ""
+rancher_agent_labels: {}

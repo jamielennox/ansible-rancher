@@ -1,0 +1,23 @@
+---
+- name: set distribution variables
+  include_vars: "{{ item }}"
+  with_items:
+    - "{{ ansible_distribution | lower }}.yml"
+    - "{{ ansible_os_family | lower }}-family.yml"
+
+- include: "{{ ansible_distribution | lower }}-dist.yml"
+- include: "{{ ansible_os_family | lower }}-family.yml"
+
+- name: Install haveged
+  become: yes
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ common_packages }}"
+
+- name: Start the haveged service
+  become: yes
+  service:
+    name: haveged
+    enabled: yes
+    state: started

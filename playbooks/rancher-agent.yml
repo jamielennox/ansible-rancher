@@ -1,0 +1,23 @@
+---
+- name: Install rancher agent
+  hosts: rancher-agent
+  become: yes
+  tags:
+    - rancher
+    - agent
+
+  vars_prompt:
+    - name: rancher_agent_url
+      prompt: Enter the host signup URL
+      private: no
+
+  pre_tasks:
+    - name: set selinux
+      selinux:
+        policy: targeted
+        state: enforcing
+
+  roles:
+    - role: rancher-agent
+      tags:
+        - rancher-agent
